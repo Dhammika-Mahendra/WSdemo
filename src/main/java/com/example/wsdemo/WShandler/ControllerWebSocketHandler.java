@@ -29,7 +29,7 @@ public class ControllerWebSocketHandler extends TextWebSocketHandler {
             DeviceWebSocketHandler.devSessions.values().forEach(s -> {
                 try {
                     if (s.isOpen()) {
-                        s.sendMessage(new TextMessage("Signal: " + payload));
+                        s.sendMessage(new TextMessage( payload));
                     }
                 } catch (IOException e) {
                     logger.error("Error sending signal to /dev session: {}", s.getId(), e);
