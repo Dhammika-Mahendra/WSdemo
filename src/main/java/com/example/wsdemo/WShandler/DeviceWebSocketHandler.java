@@ -38,10 +38,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         logger.info("Received message on /dev: {} from session: {}", message.getPayload(), session.getId());
 
-        if ("ok".equals(message.getPayload())) {
-            lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
-            return;
-        }
+        lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
 
         // Forward other messages to all connected /con sessions
         DeviceWebSocketHandler.conSessions.values().forEach(s -> {
