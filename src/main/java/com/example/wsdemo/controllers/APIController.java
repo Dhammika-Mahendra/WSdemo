@@ -15,6 +15,8 @@ public class APIController {
 
         if (Store.isValidDevice(credentials.getId())) {
             String token = UUID.randomUUID().toString();
+            //attaching id to token
+            token = token+credentials.getId();
             Store.saveToken(credentials.getId(), token);
             System.out.println("User logged in: " + credentials.getId() + ", token: " + token);
             return token;

@@ -1,12 +1,11 @@
 package com.example.wsdemo.model;
 
 public class DeviceInfo {
+    public String type;
     public String id;
     public String status;
 
-    public DeviceInfo(String id, String name, String status) {
-        this.id = id;
-        this.status = status;
+    public DeviceInfo() {
     }
     public String getId() {
         return id;
@@ -20,5 +19,12 @@ public class DeviceInfo {
     }
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getType() {
+        return type;
+    }
+    public void setType(String type) {
+        this.type = type;
     }
 }

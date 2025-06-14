@@ -2,16 +2,14 @@ package com.example.wsdemo.util;
 
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Store {
 
     private static final List<DeviceRecord> deviceRecords = List.of(
-            new DeviceRecord("123", "Dead", "Active"),
-            new DeviceRecord("456", "Dead", "Active"),
-            new DeviceRecord("789", "Dead", "Active")
+            new DeviceRecord("123", "Dead", "1"),
+            new DeviceRecord("456", "Dead", "1"),
+            new DeviceRecord("789", "Dead", "0")
     );
 
     private Store() {
@@ -88,14 +86,27 @@ public class Store {
     //=========================================================
     //                      Validation
     //=========================================================
+
     public static boolean isValidDevice(String id) {
         //does this id presents with in the device records?
         return deviceRecords.stream().anyMatch(record -> record.id.equals(id));
     }
 
-    public static boolean isValidToken(String id, String token) {
-        //does this id and token pair presents with in the device records?
+    //does this id and token pair presents with in the device records?
+    public static boolean isMatchingToken(String id, String token) {
         return deviceRecords.stream()
                 .anyMatch(record -> record.id.equals(id) && record.token != null && record.token.equals(token));
+    }
+
+    //whether the token exist
+    public static boolean isValidToken(String token) {
+        return deviceRecords.stream()
+                .anyMatch(record -> record.token != null && record.token.equals(token));
+    }
+
+    //extract id (last 3 digits of the token)
+    public static String extractIdFromToken(String token) {
+        if (token == null || token.length() < 3) return null;
+        return token.substring(token.length() - 3);
     }
 }

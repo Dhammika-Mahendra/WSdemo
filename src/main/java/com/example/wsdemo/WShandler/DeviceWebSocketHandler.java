@@ -1,5 +1,6 @@
 package com.example.wsdemo.WShandler;
 
+import com.example.wsdemo.model.DeviceInfo;
 import com.example.wsdemo.util.Store;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.CloseStatus;
@@ -10,6 +11,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,9 +32,8 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String query = session.getUri().getQuery();
         String token = extractToken(query);
-        String id = extractId(query);
 
-        if (token == null || id == null || !Store.isValidToken(id, token)) {
+        if (token == null || !Store.isValidToken(token)) {
             session.close(CloseStatus.POLICY_VIOLATION);
             System.out.println("Device connection rejected: Invalid token");
             return;
@@ -40,28 +41,45 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
         devSessions.put(session.getId(), session);
         lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
-        System.out.println("Device connected on /dev [ id: "+id+" | session: " + session.getId()+" ]");
+        String devId = Store.extractIdFromToken(token);
+        System.out.println("Device connected on /dev [ id: "+devId+" | session: " + session.getId()+" ]");
         //session.sendMessage(new TextMessage("Connected to /dev"));
-        Store.loginDevice(id, session.getId(), token);
+        Store.loginDevice(devId, session.getId(), token);
         notifyControllers();
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        System.out.println("Received message on /dev: " + message.getPayload() + " from session: " + session.getId());
+        try {
 
-        lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
+            // Unwrapping incoming payload
+            ObjectMapper objectMapper = new ObjectMapper();
+            DeviceInfo deviceInfo = objectMapper.readValue(message.getPayload(), DeviceInfo.class);
 
-        // Forward other messages to all connected /con sessions
-        DeviceWebSocketHandler.conSessions.values().forEach(s -> {
-            try {
-                if (s.isOpen()) {
-                    s.sendMessage(new TextMessage("Message from /dev: " + message.getPayload()));
-                }
-            } catch (IOException e) {
-                System.out.println("Error forwarding message to /con session: " + s.getId() + " " + e.getMessage());
+            // validation
+            String query = session.getUri().getQuery();
+            String token = extractToken(query);
+            String id = deviceInfo.getId();
+
+            if (token == null || id == null || !Store.isMatchingToken(id, token)) {
+                System.out.println("Invalid token or id in message");
+                return;
             }
-        });
+
+            if(Objects.equals(deviceInfo.getType(), "USAGE")){
+                //status updation
+                System.out.println("Device Message [id: " + deviceInfo.getId() + " | status: " + deviceInfo.getStatus() + "]");
+                Store.saveDeviceStatusById(deviceInfo.getId(), deviceInfo.getStatus());
+                lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
+                notifyControllers();
+            }else if(Objects.equals(deviceInfo.getType(), "PING")){
+                //only a heartbeat message
+                lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
+            }
+
+        } catch (Exception e) {
+            System.out.println("Invalid message format: " + message.getPayload());
+        }
     }
 
 

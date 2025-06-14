@@ -13,10 +13,7 @@ public class ControllerWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         DeviceWebSocketHandler.conSessions.put(session.getId(), session);
         System.out.println("Controller connected on /con: " + session.getId());
-        session.sendMessage(new TextMessage("Connected to /con"));
         // Send current device status on connection
-        String status = DeviceWebSocketHandler.devSessions.isEmpty() ? "dead" : "live";
-        session.sendMessage(new TextMessage("Device status: " + status));
     }
 
     @Override
