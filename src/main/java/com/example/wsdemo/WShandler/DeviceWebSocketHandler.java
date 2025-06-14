@@ -23,7 +23,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     static final ConcurrentHashMap<String, WebSocketSession> conSessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> lastHeartbeatTime = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static final long HEARTBEAT_TIMEOUT = 50000; // 5 seconds in milliseconds
+    private static final long HEARTBEAT_TIMEOUT = 20000; // 5 seconds in milliseconds
 
     public DeviceWebSocketHandler() {
         scheduler.scheduleAtFixedRate(this::checkHeartbeats, 5, 5, TimeUnit.SECONDS);
@@ -74,6 +74,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
                 notifyControllers();
             }else if(Objects.equals(deviceInfo.getType(), "PING")){
                 //only a heartbeat message
+                System.out.println("Heartbeat received from device " + deviceInfo.getId());
                 lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
             }
 
@@ -89,7 +90,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
         lastHeartbeatTime.remove(session.getId());
         String devId= Store.getDeviceIdBySessionId(session.getId());
         Store.logoutDevice(devId);
-        System.out.println("Device "+devId+" disconnected on /dev (graceful) ");
+        System.out.println("Device "+devId+" disconnected on /dev");
         notifyControllers();
     }
 
@@ -120,13 +121,11 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
                 WebSocketSession session = devSessions.get(sessionId);
                 if (session != null && session.isOpen()) {
                     try {
+                        String devId=Store.getDeviceIdBySessionId(sessionId);
+                        System.out.println("Device "+devId+" out of heartbeat timeout ");
                         session.close();
                         devSessions.remove(sessionId);
                         lastHeartbeatTime.remove(sessionId);
-                        String devId=Store.getDeviceIdBySessionId(sessionId);
-                        System.out.println("Device "+devId+" disconnected due to heartbeat timeout ");
-                        Store.logoutDevice(devId);
-                        notifyControllers();
                     } catch (IOException e) {
                         System.out.println("Error closing timed out session: " + sessionId + " " + e.getMessage());
                     }

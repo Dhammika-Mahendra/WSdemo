@@ -32,6 +32,15 @@ public class Store {
                 .orElse(null);
     }
 
+    //get session id by device id
+    public static String getSessionIdByDeviceId(String id) {
+        return deviceRecords.stream()
+                .filter(record -> record.id.equals(id))
+                .map(record -> record.sessionId)
+                .findFirst()
+                .orElse(null);
+    }
+
     //===================================================
     //                      Data Save
     //===================================================
@@ -81,6 +90,14 @@ public class Store {
                 record.token = null;
                 record.status = "Dead";
             });
+    }
+
+    //update device active by the given id
+    public static void saveDeviceActive(String id, String active) {
+        deviceRecords.stream()
+            .filter(record -> record.id.equals(id))
+            .findFirst()
+            .ifPresent(record -> record.active = active);
     }
 
     //=========================================================

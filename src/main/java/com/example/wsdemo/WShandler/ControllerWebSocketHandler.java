@@ -1,5 +1,9 @@
 package com.example.wsdemo.WShandler;
 
+import com.example.wsdemo.model.DeviceCommand;
+import com.example.wsdemo.model.DeviceInfo;
+import com.example.wsdemo.util.Store;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -14,24 +18,46 @@ public class ControllerWebSocketHandler extends TextWebSocketHandler {
         DeviceWebSocketHandler.conSessions.put(session.getId(), session);
         System.out.println("Controller connected on /con: " + session.getId());
         // Send current device status on connection
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(Store.getDeviceRecords());
+        session.sendMessage(new TextMessage(json));
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        String payload = message.getPayload();
-        System.out.println("Received message on /con: " + payload + " from session: " + session.getId());
-        if (payload.equals("0") || payload.equals("1")) {
-            DeviceWebSocketHandler.devSessions.values().forEach(s -> {
-                try {
-                    if (s.isOpen()) {
-                        s.sendMessage(new TextMessage( payload));
-                    }
-                } catch (IOException e) {
-                    System.out.println("Error sending signal to /dev session: " + s.getId() + ", error: " + e.getMessage());
-                }
-            });
-        } else {
-            session.sendMessage(new TextMessage("Invalid signal: Use '0' or '1'"));
+        try {
+            // Unwrap incoming payload
+            ObjectMapper objectMapper = new ObjectMapper();
+            DeviceCommand deviceCmd = objectMapper.readValue(message.getPayload(), DeviceCommand.class);
+
+            String deviceId = deviceCmd.getId();
+            if (!Store.isValidDevice(deviceId)) {
+                System.out.println("Invalid device ID: " + deviceId);
+                return;
+            }
+
+            String deviceSessionId = Store.getSessionIdByDeviceId(deviceId);
+            if (deviceSessionId == null) {
+                System.out.println("Device not connected: " + deviceId);
+                return;
+            }
+
+            if(deviceCmd.getType().equals("ACTIVE")){
+                Store.saveDeviceActive(deviceId, deviceCmd.getCommand());
+                ObjectMapper objectMapper2 = new ObjectMapper();
+                String json = objectMapper2.writeValueAsString(Store.getDeviceRecords());
+                session.sendMessage(new TextMessage(json));//new updates back to controller
+            }
+            WebSocketSession deviceSession = DeviceWebSocketHandler.devSessions.get(deviceSessionId);
+            if (deviceSession != null && deviceSession.isOpen()) {
+                String commandJson = objectMapper.writeValueAsString(deviceCmd);
+                deviceSession.sendMessage(new TextMessage(commandJson));
+                System.out.println("Command sent to device " + deviceId + ": " + deviceCmd.getCommand());
+            } else {
+                System.out.println("Device session not active: " + deviceId);
+            }
+        } catch (Exception e) {
+            System.out.println("Error processing command: " + e.getMessage());
         }
     }
 
