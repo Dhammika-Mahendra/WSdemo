@@ -1,11 +1,9 @@
 package com.example.wsdemo.controllers;
 
-import com.example.wsdemo.model.DeviceInfo;
+import com.example.wsdemo.model.Cred;
 import com.example.wsdemo.util.Store;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -13,12 +11,12 @@ import java.util.UUID;
 public class APIController {
 
     @PostMapping("/login")
-    public String login(@RequestBody DeviceInfo deviceInfo) {
+    public String login(@RequestBody Cred credentials) {
 
-        if (Store.isValidDevice(deviceInfo.getId())) {
+        if (Store.isValidDevice(credentials.getId())) {
             String token = UUID.randomUUID().toString();
-            Store.saveToken(deviceInfo.getId(), token);
-            System.out.println("User logged in: " + deviceInfo.getId() + ", token: " + token);
+            Store.saveToken(credentials.getId(), token);
+            System.out.println("User logged in: " + credentials.getId() + ", token: " + token);
             return token;
         } else {
             return "";

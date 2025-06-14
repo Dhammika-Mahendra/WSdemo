@@ -42,8 +42,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
         lastHeartbeatTime.put(session.getId(), System.currentTimeMillis());
         System.out.println("Device connected on /dev [ id: "+id+" | session: " + session.getId()+" ]");
         //session.sendMessage(new TextMessage("Connected to /dev"));
-        Store.saveDeviceStatusById(id, "live");
-        Store.saveSessionId(id, session.getId());
+        Store.loginDevice(id, session.getId(), token);
         notifyControllers();
     }
 
@@ -70,7 +69,9 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, org.springframework.web.socket.CloseStatus status) {
         devSessions.remove(session.getId());
         lastHeartbeatTime.remove(session.getId());
-        System.out.println("Device disconnected on /dev: " + session.getId() + ", status: " + status);
+        String devId= Store.getDeviceIdBySessionId(session.getId());
+        Store.logoutDevice(devId);
+        System.out.println("Device "+devId+" disconnected on /dev (graceful) ");
         notifyControllers();
     }
 
@@ -106,8 +107,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
                         lastHeartbeatTime.remove(sessionId);
                         String devId=Store.getDeviceIdBySessionId(sessionId);
                         System.out.println("Device "+devId+" disconnected due to heartbeat timeout ");
-                        Store.saveDeviceStatusBySessionId(sessionId, "dead");
-                        Store.saveSessionId(devId, null);
+                        Store.logoutDevice(devId);
                         notifyControllers();
                     } catch (IOException e) {
                         System.out.println("Error closing timed out session: " + sessionId + " " + e.getMessage());

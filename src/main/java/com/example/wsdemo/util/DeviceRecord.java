@@ -6,8 +6,11 @@ public class DeviceRecord {
     public String sessionId;
     public String status;
 
-    public DeviceRecord(String id, String status) {
+    public String active;
+
+    public DeviceRecord(String id, String status, String active) {
         this.id = id;
         this.status = status;
+        this.active = active;
     }
 }

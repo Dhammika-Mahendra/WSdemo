@@ -9,18 +9,36 @@ import java.util.Map;
 public class Store {
 
     private static final List<DeviceRecord> deviceRecords = List.of(
-            new DeviceRecord("123", "Active"),
-            new DeviceRecord("456", "Active"),
-            new DeviceRecord("789", "Active")
+            new DeviceRecord("123", "Dead", "Active"),
+            new DeviceRecord("456", "Dead", "Active"),
+            new DeviceRecord("789", "Dead", "Active")
     );
 
     private Store() {
     }
 
+    //===================================================
+    //                      Data retrieval
+    //===================================================
+
     public static List<DeviceRecord> getDeviceRecords() {
         return deviceRecords;
     }
 
+    //get device id by session id
+    public static String getDeviceIdBySessionId(String sessionId) {
+        return deviceRecords.stream()
+                .filter(record -> record.sessionId != null && record.sessionId.equals(sessionId))
+                .map(record -> record.id)
+                .findFirst()
+                .orElse(null);
+    }
+
+    //===================================================
+    //                      Data Save
+    //===================================================
+
+    //save token for device id
     public static void saveToken(String id, String token) {
         deviceRecords.stream()
             .filter(record -> record.id.equals(id))
@@ -43,31 +61,33 @@ public class Store {
             .ifPresent(record -> record.status = status);
     }
 
-    //save device status by session id
-    public static void saveDeviceStatusBySessionId(String sessionId, String status) {
+    //log in device (save new session id, token, status for the given device id)
+    public static void loginDevice(String id,String sessionId, String token) {
         deviceRecords.stream()
-            .filter(record -> record.sessionId != null && record.sessionId.equals(sessionId))
-            .findFirst()
-            .ifPresent(record -> record.status = status);
+                .filter(record -> record.id.equals(id))
+                .findFirst()
+                .ifPresent(record -> {
+                    record.sessionId = sessionId;
+                    record.token = token;
+                    record.status = "Live";
+                });
     }
 
-    //save session id for a device id
-    public static void saveSessionId(String id, String sessionId) {
+    //log out device (make session id, token null for the given device id)
+    public static void logoutDevice(String id) {
         deviceRecords.stream()
             .filter(record -> record.id.equals(id))
             .findFirst()
-            .ifPresent(record -> record.sessionId = sessionId);
+            .ifPresent(record -> {
+                record.sessionId = null;
+                record.token = null;
+                record.status = "Dead";
+            });
     }
 
-    //get device id by session id
-    public static String getDeviceIdBySessionId(String sessionId) {
-        return deviceRecords.stream()
-                .filter(record -> record.sessionId != null && record.sessionId.equals(sessionId))
-                .map(record -> record.id)
-                .findFirst()
-                .orElse(null);
-    }
-
+    //=========================================================
+    //                      Validation
+    //=========================================================
     public static boolean isValidDevice(String id) {
         //does this id presents with in the device records?
         return deviceRecords.stream().anyMatch(record -> record.id.equals(id));
