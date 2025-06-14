@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
@@ -23,7 +24,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     static final ConcurrentHashMap<String, WebSocketSession> conSessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> lastHeartbeatTime = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static final long HEARTBEAT_TIMEOUT = 20000; // 5 seconds in milliseconds
+    private static final long HEARTBEAT_TIMEOUT = 40000; // 5 seconds in milliseconds
 
     public DeviceWebSocketHandler() {
         scheduler.scheduleAtFixedRate(this::checkHeartbeats, 5, 5, TimeUnit.SECONDS);
@@ -46,6 +47,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
         //session.sendMessage(new TextMessage("Connected to /dev"));
         Store.loginDevice(devId, session.getId(), token);
         notifyControllers();
+        notifyUsers();
     }
 
     @Override
@@ -92,6 +94,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
         Store.logoutDevice(devId);
         System.out.println("Device "+devId+" disconnected on /dev");
         notifyControllers();
+        notifyUsers();
     }
 
     static void notifyControllers() {
@@ -104,6 +107,22 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
                 }
             } catch (IOException e) {
                 System.out.println("Error sending status to /con session: " + s.getId() + " " + e.getMessage());
+            }
+        });
+    }
+
+    static void notifyUsers() {
+        UserWebSocketHandler.userSessions.values().forEach(s -> {
+            try {
+                if (s.isOpen()) {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String json = objectMapper.writeValueAsString(Store.getDeviceRecords().stream()
+                            .filter(device -> "1".equals(device.active) && !"Dead".equals(device.status))
+                            .collect(Collectors.toList()));
+                    s.sendMessage(new TextMessage(json));
+                }
+            } catch (IOException e) {
+                System.out.println("Error sending status to /user session: " + s.getId() + " " + e.getMessage());
             }
         });
     }

@@ -1,9 +1,6 @@
 package com.example.wsdemo.config;
 
-import com.example.wsdemo.WShandler.ChatWebSocketHandler;
-import com.example.wsdemo.WShandler.ControllerWebSocketHandler;
-import com.example.wsdemo.WShandler.CustomWebSocketHandler;
-import com.example.wsdemo.WShandler.DeviceWebSocketHandler;
+import com.example.wsdemo.WShandler.*;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -19,5 +16,6 @@ class WebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(new ChatWebSocketHandler("/chat2"), "/chat2").setAllowedOrigins("*");
         registry.addHandler(new DeviceWebSocketHandler(), "/dev").setAllowedOrigins("*");
         registry.addHandler(new ControllerWebSocketHandler(), "/con").setAllowedOrigins("*");
+        registry.addHandler(new UserWebSocketHandler(), "/user").setAllowedOrigins("*");
     }
 }
