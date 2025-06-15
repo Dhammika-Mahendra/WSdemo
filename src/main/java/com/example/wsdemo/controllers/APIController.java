@@ -10,8 +10,8 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class APIController {
 
-    @PostMapping("/login")
-    public String login(@RequestBody Cred credentials) {
+    @PostMapping("/dev/login")
+    public String devLogin(@RequestBody Cred credentials) {
 
         if (Store.isValidDevice(credentials.getId())) {
             String token = UUID.randomUUID().toString();
@@ -23,5 +23,16 @@ public class APIController {
         } else {
             return "";
         }
+    }
+
+    @PostMapping("/usr/login")
+    public String usrLogin(@RequestBody String userName) {
+            if (Store.isUserExists(userName)) {
+                String token = UUID.randomUUID().toString() + userName;
+                Store.saveUserToken(userName, token);
+                System.out.println("User logged in: " + userName + ", token: " + token);
+                return token;
+            }
+        return "";
     }
 }

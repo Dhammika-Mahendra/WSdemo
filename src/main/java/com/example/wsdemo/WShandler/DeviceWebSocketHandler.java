@@ -24,7 +24,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     static final ConcurrentHashMap<String, WebSocketSession> conSessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> lastHeartbeatTime = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static final long HEARTBEAT_TIMEOUT = 40000; // 5 seconds in milliseconds
+    private static final long HEARTBEAT_TIMEOUT = 60000; // 5 seconds in milliseconds
 
     public DeviceWebSocketHandler() {
         scheduler.scheduleAtFixedRate(this::checkHeartbeats, 5, 5, TimeUnit.SECONDS);

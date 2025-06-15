@@ -5,8 +5,8 @@ public class DeviceRecord {
     public String token;
     public String sessionId;
     public String status;
-
     public String active;
+    public String user;
 
     public DeviceRecord(String id, String status, String active) {
         this.id = id;

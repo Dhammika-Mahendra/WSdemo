@@ -1,7 +1,5 @@
 package com.example.wsdemo.util;
 
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 
 public class Store {
@@ -10,6 +8,14 @@ public class Store {
             new DeviceRecord("123", "Dead", "1"),
             new DeviceRecord("456", "Dead", "1"),
             new DeviceRecord("789", "Dead", "0")
+    );
+
+    private static final List<User> users = List.of(
+            new User("A", false),
+            new User("B", false),
+            new User("C", false),
+            new User("D", false),
+            new User("E", false)
     );
 
     private Store() {
@@ -68,6 +74,17 @@ public class Store {
             .ifPresent(record -> record.status = status);
     }
 
+    public static void useDevice(String id, String status, String user) {
+        deviceRecords.stream()
+        .filter(record -> record.id.equals(id))
+        .findFirst()
+        .ifPresent(record -> {
+            record.status = status;
+            record.user = user;
+        });
+    }
+
+
     //log in device (save new session id, token, status for the given device id)
     public static void loginDevice(String id,String sessionId, String token) {
         deviceRecords.stream()
@@ -89,6 +106,7 @@ public class Store {
                 record.sessionId = null;
                 record.token = null;
                 record.status = "Dead";
+                record.user = null;
             });
     }
 
@@ -98,6 +116,13 @@ public class Store {
             .filter(record -> record.id.equals(id))
             .findFirst()
             .ifPresent(record -> record.active = active);
+    }
+
+    public static void saveUserToken(String username, String token) {
+        users.stream()
+                .filter(user -> user.name.equals(username))
+                .findFirst()
+                .ifPresent(user -> user.token = token);
     }
 
     //=========================================================
@@ -126,4 +151,9 @@ public class Store {
         if (token == null || token.length() < 3) return null;
         return token.substring(token.length() - 3);
     }
+
+    public static boolean isUserExists(String username) {
+        return users.stream().anyMatch(user -> user.name.equals(username));
+    }
+
 }
