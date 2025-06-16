@@ -128,6 +128,12 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
     }
 
 
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        System.out.println("WebSocket error: " + exception.getMessage());
+    }
+
+
     //=============================================
     // Helper methods
     //=============================================
