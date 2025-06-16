@@ -18,7 +18,7 @@ public class APIController {
             //attaching id to token
             token = token+credentials.getId();
             Store.saveToken(credentials.getId(), token);
-            System.out.println("User logged in: " + credentials.getId() + ", token: " + token);
+            System.out.println("Device logged in: " + credentials.getId() + ", token: " + token);
             return token;
         } else {
             return "";
